@@ -5,11 +5,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
 from src.exception import CustomException
 
-
 def save_object(file_path, obj):
-    """
-    Saves a Python object (such as a trained model or preprocessor) to disk.
-    """
     try:
         dir_path = os.path.dirname(file_path)
         os.makedirs(dir_path, exist_ok=True)
@@ -23,17 +19,16 @@ def save_object(file_path, obj):
 
 def evaluate_models(X_train, y_train, X_test, y_test, models, param=None):
     """
-    Fits each model on the training data, optionally performs hyperparameter 
-    tuning via GridSearchCV, predicts on the test set, and returns a dictionary 
-    mapping model names to their test R2 scores.
+    Fits models with optional hyperparameter tuning via GridSearchCV and returns R2 scores.
     """
     try:
         report = {}
 
         for model_name, model in models.items():
-            # Apply GridSearchCV if hyperparameter grid is provided for the model
-            if param and model_name in param and param[model_name]:
-                para = param[model_name]
+            # Extract parameters for the current model if param dict is provided
+            para = param.get(model_name, {}) if param else {}
+
+            if para:
                 gs = GridSearchCV(model, para, cv=3, n_jobs=-1)
                 gs.fit(X_train, y_train)
 
@@ -42,7 +37,7 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param=None):
             # Train model
             model.fit(X_train, y_train)
 
-            # Predict on test data
+            # Predict test data
             y_test_pred = model.predict(X_test)
 
             # Calculate R2 Score
@@ -57,9 +52,6 @@ def evaluate_models(X_train, y_train, X_test, y_test, models, param=None):
 
 
 def load_object(file_path):
-    """
-    Loads a pickled object from disk for model inference.
-    """
     try:
         with open(file_path, "rb") as file_obj:
             return pickle.load(file_obj)
